@@ -18,6 +18,4 @@ class BookingLoadedSuccessState extends BookingState {
 
 class BookingErrorState extends BookingState {}
 
-class BookingNavigateToStarPageActionState extends BookingActionState {}
 
-class BookingStarAddedState extends BookingActionState {}

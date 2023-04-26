@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:adda/db/local/local_database.dart';
 import 'package:adda/utils/color.dart';
 import 'package:adda/utils/helper.dart';
@@ -31,21 +29,8 @@ class _BookingState extends State<Booking> {
       bloc: bookingBloc,
       listenWhen: (previous, current) => current is BookingActionState,
       buildWhen: (previous, current) => current is! BookingActionState,
-      listener: (context, state) {
-        if (state is BookingNavigateToStarPageActionState) {
-          // Navigator.of(context).push(
-          //   MaterialPageRoute(
-          //     builder: (context) => const Star(),
-          //   ),
-          // );
-        }
-
-        if (state is BookingStarAddedState) {
-          Helper.toast(context, AppString.addStar);
-        }
-      },
+      listener: (context, state) {},
       builder: (context, state) {
-        log(state.runtimeType.toString());
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,

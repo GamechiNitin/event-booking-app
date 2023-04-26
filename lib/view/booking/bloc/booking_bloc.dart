@@ -12,8 +12,6 @@ part 'booking_state.dart';
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc() : super(BookingInitial()) {
     on<BookingInitialEvent>(homeInitialEvent);
-    on<HomeProductStarOnClickedEvent>(homeProductStarOnClickedEvent);
-    on<HomeStarOnTapNavigateEvent>(homeCartOnTapNavigateEvent);
   }
 
   FutureOr<void> homeInitialEvent(
@@ -28,17 +26,5 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     } catch (e) {
       log(e.toString());
     }
-  }
-
-  FutureOr<void> homeProductStarOnClickedEvent(
-      HomeProductStarOnClickedEvent event, Emitter<BookingState> emit) {
-    // starList.add(event.clickedProduct);
-    emit(BookingStarAddedState());
-  }
-
-  FutureOr<void> homeCartOnTapNavigateEvent(
-      HomeStarOnTapNavigateEvent event, Emitter<BookingState> emit) {
-    log("homeCartOnTapNavigateEvent");
-    emit(BookingNavigateToStarPageActionState());
   }
 }
