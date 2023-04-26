@@ -12,7 +12,8 @@ class BookingCardComponent extends StatelessWidget {
       this.t2,
       this.timeDifference,
       this.total,
-      this.activities, this.desc});
+      this.activities,
+      this.desc});
   final String? uuid;
   final String? date;
   final String? t1, t2;
@@ -40,6 +41,16 @@ class BookingCardComponent extends StatelessWidget {
             thickness: kBorderWidth,
           ),
           TotalCardWidget(
+            v1: "Status",
+            v2: "Not Approved",
+            textColor: kRedColor,
+          ),
+          Divider(
+            height: 0,
+            color: kLightGreenColor,
+            thickness: kBorderWidth,
+          ),
+          TotalCardWidget(
             v1: "Activities",
             v2: activities ?? "",
           ),
@@ -48,10 +59,11 @@ class BookingCardComponent extends StatelessWidget {
             color: kLightGreenColor,
             thickness: kBorderWidth,
           ),
-          TotalCardWidget(
-            v1: "Description",
-            v2: desc ?? "",
-          ),
+          if (desc != "")
+            TotalCardWidget(
+              v1: "Description",
+              v2: desc ?? "",
+            ),
           Divider(
             height: 0,
             color: kLightGreenColor,

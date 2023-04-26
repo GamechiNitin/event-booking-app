@@ -25,8 +25,10 @@ class LocalDataBase {
     } else {
       bool check =
           savedList.any((element) => element.uuid == bookingModel.uuid);
-      bool samedate =
-          savedList.any((element) => element.date == bookingModel.date);
+      bool samedate = savedList.any((element) =>
+          (element.date == bookingModel.date &&
+              element.formatedStartTime == bookingModel.formatedStartTime &&
+              element.formatedEndTime == bookingModel.formatedEndTime));
 
       if (!check && !samedate) {
         savedList.add(bookingModel);

@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 
 class TotalCardWidget extends StatelessWidget {
   const TotalCardWidget(
-      {super.key, required this.v1, required this.v2, this.color});
+      {super.key,
+      required this.v1,
+      required this.v2,
+      this.color,
+      this.textColor});
   final String v1, v2;
   final Color? color;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +40,8 @@ class TotalCardWidget extends StatelessWidget {
           ),
           Text(
             v2,
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: textColor ?? Colors.black,
               fontSize: size12,
             ),
           )

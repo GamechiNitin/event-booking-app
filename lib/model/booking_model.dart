@@ -49,6 +49,7 @@ class BookingModel {
     uuid = json['uuid'];
     formatedDate = json['formatedDate'];
     formatedStartTime = json['formatedStartTime'];
+    formatedEndTime = json['formatedEndTime'];
     date = json['date'];
     difference = json['difference'];
     bookingType = json['bookingType'];
@@ -61,6 +62,7 @@ class BookingModel {
     data['uuid'] = uuid;
     data['formatedDate'] = formatedDate;
     data['formatedStartTime'] = formatedStartTime;
+    data['formatedEndTime'] = formatedEndTime;
     data['date'] = date;
     data['difference'] = difference;
     data['bookingType'] = bookingType;
