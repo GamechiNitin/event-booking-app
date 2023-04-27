@@ -73,7 +73,8 @@ class _BookingState extends State<Booking> {
                                   activities:
                                       state.bookingList[index].bookingType ??
                                           "",
-                                  date: state.bookingList[index].date ?? "",
+                                  date: state.bookingList[index].formatedDate ??
+                                      "",
                                   timeDifference:
                                       state.bookingList[index].difference,
                                   total: state.bookingList[index].total,

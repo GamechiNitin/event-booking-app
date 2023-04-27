@@ -20,17 +20,13 @@ class LocalDataBase {
       bool val =
           await sharedPreferences.setString("pref", jsonEncode(res.toJson()));
 
-      log(res.toJson().toString());
       return val;
     } else {
-      bool check =
-          savedList.any((element) => element.uuid == bookingModel.uuid);
-      bool samedate = savedList.any((element) =>
-          (element.date == bookingModel.date &&
-              element.formatedStartTime == bookingModel.formatedStartTime &&
-              element.formatedEndTime == bookingModel.formatedEndTime));
-
-      if (!check && !samedate) {
+      bool val = await checkDBBooking(
+          context: context,
+          newBookingModelEntry: bookingModel,
+          savedDataList: savedList);
+      if (val == false) {
         savedList.add(bookingModel);
         var res = BookingResponse(results: savedList);
         SharedPreferences sharedPreferences =
@@ -40,24 +36,9 @@ class LocalDataBase {
 
         log(res.toJson().toString());
         return val;
-      } else if (samedate) {
-        Helper.toast(context, "Already booked the activites for this date");
-        return false;
-      } else {
-        Helper.toast(context, "Already activities exit");
-        return false;
       }
     }
-  }
-
-  static Future<bool> saveSlots2(List<BookingModel> bookingModelList) async {
-    var res = BookingResponse(results: bookingModelList);
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    bool val =
-        await sharedPreferences.setString("pref", jsonEncode(res.toJson()));
-
-    log(res.toJson().toString());
-    return val;
+    return false;
   }
 
   static Future<List<BookingModel>> getSaveSlots() async {
@@ -84,5 +65,63 @@ class LocalDataBase {
   static void clear() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     sharedPreferences.clear();
+  }
+
+  static Future<bool> checkDBBooking({
+    required List<BookingModel> savedDataList,
+    required BookingModel newBookingModelEntry,
+    required BuildContext context,
+  }) async {
+    if (savedDataList.isNotEmpty &&
+        newBookingModelEntry.date != null &&
+        newBookingModelEntry.fullStartDateTime != null &&
+        newBookingModelEntry.fullEndDateTime != null) {
+      DateTime sDatetime =
+          DateTime.parse(newBookingModelEntry.fullStartDateTime!);
+      DateTime eDatetime =
+          DateTime.parse(newBookingModelEntry.fullEndDateTime!);
+      if (savedDataList
+          .any((element) => element.uuid == newBookingModelEntry.uuid)) {
+        Helper.toast(context, "Something went wrong! Try again later");
+        return true;
+      } else {
+        for (var element in savedDataList) {
+          if (element.bookingType == newBookingModelEntry.bookingType &&
+              element.date == newBookingModelEntry.date) {
+            if (DateTime.parse(element.fullStartDateTime!) == sDatetime ||
+                DateTime.parse(element.fullEndDateTime!) == eDatetime) {
+              Helper.toast(context, "Booking Failed! Already Booked");
+              return true;
+            } else {
+              if (DateTime.parse(element.fullStartDateTime!)
+                      .isAfter(sDatetime) &&
+                  DateTime.parse(element.fullEndDateTime!)
+                      .isBefore(eDatetime)) {
+                Helper.toast(context, "Booking Failed! Already Booked");
+                return true;
+              }
+
+              if ((DateTime.parse(element.fullStartDateTime!)
+                          .isBefore(eDatetime) &&
+                      DateTime.parse(element.fullStartDateTime!)
+                          .isAfter(sDatetime)) ||
+                  (DateTime.parse(element.fullEndDateTime!)
+                          .isBefore(eDatetime) &&
+                      DateTime.parse(element.fullEndDateTime!)
+                          .isAfter(sDatetime)) ||
+                  (DateTime.parse(element.fullStartDateTime!)
+                          .isBefore(sDatetime) &&
+                      DateTime.parse(element.fullEndDateTime!)
+                          .isAfter(eDatetime))) {
+                Helper.toast(context,
+                    "Booking Failed! Already Booked Overlap Timeslots");
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }

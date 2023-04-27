@@ -1,46 +1,26 @@
-class BookingResponse {
-  List<BookingModel>? results;
 
-  BookingResponse({this.results});
+import 'package:flutter/material.dart';
 
-  BookingResponse.fromJson(Map<String, dynamic> json) {
-    if (json['results'] != null) {
-      results = <BookingModel>[];
-      json['results'].forEach((v) {
-        results!.add(BookingModel.fromJson(v));
-      });
-    }
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (results != null) {
-      data['results'] = results!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
-}
-
-class BookingModel {
+class SavedBookingModel {
   int? total;
-  String? date;
+  DateTime? date;
   String? formatedDate;
   String? uuid;
-  String? fullStartDateTime;
-  String? fullEndDateTime;
+  TimeOfDay? startTime;
   String? formatedStartTime;
   String? formatedEndTime;
+  TimeOfDay? endTime;
   int? difference;
   String? bookingType;
   String? desc;
 
-  BookingModel({
+  SavedBookingModel({
     this.total,
     this.uuid,
     this.date,
     this.formatedDate,
-    this.fullStartDateTime,
-    this.fullEndDateTime,
+    this.startTime,
+    this.endTime,
     this.formatedStartTime,
     this.formatedEndTime,
     this.difference,
@@ -48,12 +28,12 @@ class BookingModel {
     this.desc,
   });
 
-  BookingModel.fromJson(Map<String, dynamic> json) {
+  SavedBookingModel.fromJson(Map<dynamic, dynamic> json) {
     total = json['total'];
     uuid = json['uuid'];
     date = json['date'];
-    fullStartDateTime = json['fullStartDateTime'];
-    fullEndDateTime = json['fullEndDateTime'];
+    startTime = json['startTime'];
+    endTime = json['endTime'];
     formatedDate = json['formatedDate'];
     formatedStartTime = json['formatedStartTime'];
     formatedEndTime = json['formatedEndTime'];
@@ -69,9 +49,9 @@ class BookingModel {
     data['formatedDate'] = formatedDate;
     data['formatedStartTime'] = formatedStartTime;
     data['formatedEndTime'] = formatedEndTime;
-    data['fullStartDateTime'] = fullStartDateTime;
+    data['startTime'] = startTime;
     data['date'] = date;
-    data['fullEndDateTime'] = fullEndDateTime;
+    data['endTime'] = endTime;
     data['difference'] = difference;
     data['bookingType'] = bookingType;
     data['desc'] = desc;

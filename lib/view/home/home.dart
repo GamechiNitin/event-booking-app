@@ -1,9 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
-
-import 'dart:developer';
-
 import 'package:adda/db/local/local_database.dart';
 import 'package:adda/model/booking_model.dart';
+import 'package:adda/model/saved_model.dart';
 import 'package:adda/utils/color.dart';
 import 'package:adda/utils/constant.dart';
 import 'package:adda/utils/dialog_box.dart';
@@ -24,7 +22,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  static String? selectedValue;
   static List<String> listData = ["ClubHouse", "Tennis"];
   static TextEditingController dateController = TextEditingController();
   static TextEditingController startTimeController = TextEditingController();
@@ -34,19 +31,21 @@ class _HomeState extends State<Home> {
   static FocusNode startfn = FocusNode();
   static FocusNode endfn = FocusNode();
   static FocusNode descfn = FocusNode();
-  static DateTime? selectedDate;
-  static int? timeDifference;
+  // static DateTime? selectedDate;
   static int? total;
   static bool isSelectedTimeSlots = false;
   static bool isSelectedTimeSlots2 = false;
   static bool calculated = false;
   static bool isLoading = false;
 
+  SavedBookingModel savedModel = SavedBookingModel();
+
   _refresh() {
-    selectedDate = null;
-    timeDifference = null;
+    // selectedDate = null;
+    // timeDifference = null;
     total = null;
-    selectedValue = null;
+    savedModel = SavedBookingModel();
+    // selectedValue = null;
     dateController.clear();
     startTimeController.clear();
     endTimeController.clear();
@@ -154,7 +153,7 @@ class _HomeState extends State<Home> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-                      value: selectedValue,
+                      value: savedModel.bookingType,
                       items: listData.map((e) {
                         return DropdownMenuItem<String>(
                           value: e,
@@ -162,41 +161,19 @@ class _HomeState extends State<Home> {
                         );
                       }).toList(),
                       onChanged: (onVal) {
-                        selectedValue = onVal;
+                        savedModel.bookingType = onVal;
                         if (startTimeController.text.isNotEmpty &&
                             endTimeController.text.isNotEmpty &&
-                            selectedDate != null) {
-                          timeDifference = Helper.timeDifference(
+                            savedModel.date != null) {
+                          savedModel.difference = Helper.timeDifference(
                             s: startTimeController.text,
                             e: endTimeController.text,
-                            dateTime: selectedDate,
+                            dateTime: savedModel.date,
                             context: context,
                           );
-                          if (timeDifference != null && selectedValue != null) {
-                            total = Helper.calculateTotal(
-                              selectedValue: selectedValue!,
-                              timeDifference: timeDifference!,
-                              startTime: TimeOfDay(
-                                hour: int.parse(startTimeController.text
-                                    .trim()
-                                    .split(":")
-                                    .first),
-                                minute: int.parse(startTimeController.text
-                                    .trim()
-                                    .split(":")
-                                    .last),
-                              ),
-                              endTime: TimeOfDay(
-                                hour: int.parse(endTimeController.text
-                                    .trim()
-                                    .split(":")
-                                    .first),
-                                minute: int.parse(endTimeController.text
-                                    .trim()
-                                    .split(":")
-                                    .last),
-                              ),
-                            );
+                          if (savedModel.difference != null &&
+                              savedModel.bookingType != null) {
+                            total = Helper.calculateTotal(savedModel);
                           }
                         }
                         _notify();
@@ -222,15 +199,30 @@ class _HomeState extends State<Home> {
                   );
                 },
                 onTap: () async {
-                  selectedDate = await showDatePicker(
+                  savedModel.date = await showDatePicker(
                     context: context,
                     initialDate: DateTime.now(),
                     firstDate: DateTime.now(),
                     lastDate: DateTime(2050),
                   );
-                  if (selectedDate != null &&
-                      Helper.dateForm(selectedDate!) != null) {
-                    dateController.text = Helper.dateForm(selectedDate!)!;
+                  if (savedModel.date != null &&
+                      Helper.dateFormmatHelper(savedModel.date!) != null) {
+                    dateController.text =
+                        Helper.dateFormmatHelper(savedModel.date!)!;
+
+                    if (startTimeController.text.isNotEmpty &&
+                        endTimeController.text.isNotEmpty) {
+                      savedModel.difference = Helper.timeDifference(
+                        s: startTimeController.text,
+                        e: endTimeController.text,
+                        dateTime: savedModel.date,
+                        context: context,
+                      );
+                      if (savedModel.difference != null &&
+                          savedModel.bookingType != null) {
+                        total = Helper.calculateTotal(savedModel);
+                      }
+                    }
                   }
                   _notify();
                 },
@@ -246,50 +238,37 @@ class _HomeState extends State<Home> {
                       enabled: false,
                       iconData: Icons.timer_outlined,
                       onTap: () async {
-                        if (selectedDate == null) {
+                        if (dateController.text.isEmpty) {
                           Helper.toast(context, "Select booking date");
                         } else {
-                          String? time =
-                              await Helper.getTime(context, selectedDate!);
-                          startTimeController.text = time ?? "";
-                          if (startTimeController.text.isNotEmpty &&
-                              endTimeController.text.isNotEmpty &&
-                              selectedDate != null) {
-                            timeDifference = Helper.timeDifference(
-                              s: startTimeController.text,
-                              e: endTimeController.text,
-                              dateTime: selectedDate,
-                              context: context,
-                            );
-                            if (timeDifference != null &&
-                                selectedValue != null) {
-                              total = Helper.calculateTotal(
-                                selectedValue: selectedValue!,
-                                timeDifference: timeDifference!,
-                                startTime: TimeOfDay(
-                                  hour: int.parse(startTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .first),
-                                  minute: int.parse(startTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .last),
-                                ),
-                                endTime: TimeOfDay(
-                                  hour: int.parse(endTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .first),
-                                  minute: int.parse(endTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .last),
-                                ),
+                          TimeOfDay? time =
+                              await Helper.getTime(context, savedModel.date!);
+
+                          if (time != null &&
+                              Helper.timeFormmatHelper(context, time) != null) {
+                            savedModel.startTime = time;
+                            savedModel.formatedStartTime =
+                                Helper.timeFormmatHelper(context, time);
+
+                            startTimeController.text =
+                                savedModel.formatedStartTime ?? "";
+                            isSelectedTimeSlots2 = false;
+                            isSelectedTimeSlots = false;
+
+                            if (startTimeController.text.isNotEmpty &&
+                                endTimeController.text.isNotEmpty &&
+                                savedModel.date != null) {
+                              savedModel.difference = Helper.timeDifference(
+                                s: startTimeController.text,
+                                e: endTimeController.text,
+                                dateTime: savedModel.date,
+                                context: context,
                               );
+                              if (savedModel.difference != null &&
+                                  savedModel.bookingType != null) {
+                                total = Helper.calculateTotal(savedModel);
+                              }
                             }
-                          } else {
-                            validateTimes();
                           }
                         }
                         _notify();
@@ -306,51 +285,37 @@ class _HomeState extends State<Home> {
                       enabled: false,
                       iconData: Icons.timer_outlined,
                       onTap: () async {
-                        if (selectedDate == null) {
+                        if (dateController.text.isEmpty) {
                           Helper.toast(context, "Select booking date");
                         } else {
-                          String? time =
-                              await Helper.getTime(context, selectedDate!);
+                          TimeOfDay? endtime =
+                              await Helper.getTime(context, savedModel.date!);
 
-                          endTimeController.text = time ?? "";
-                          if (startTimeController.text.isNotEmpty &&
-                              endTimeController.text.isNotEmpty &&
-                              selectedDate != null) {
-                            timeDifference = Helper.timeDifference(
-                              s: startTimeController.text,
-                              e: endTimeController.text,
-                              dateTime: selectedDate,
-                              context: context,
-                            );
-                            if (timeDifference != null &&
-                                selectedValue != null) {
-                              total = Helper.calculateTotal(
-                                selectedValue: selectedValue!,
-                                timeDifference: timeDifference!,
-                                startTime: TimeOfDay(
-                                  hour: int.parse(startTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .first),
-                                  minute: int.parse(startTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .last),
-                                ),
-                                endTime: TimeOfDay(
-                                  hour: int.parse(endTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .first),
-                                  minute: int.parse(endTimeController.text
-                                      .trim()
-                                      .split(":")
-                                      .last),
-                                ),
+                          if (endtime != null &&
+                              Helper.timeFormmatHelper(context, endtime) !=
+                                  null) {
+                            savedModel.endTime = endtime;
+                            savedModel.formatedEndTime =
+                                Helper.timeFormmatHelper(context, endtime);
+
+                            endTimeController.text =
+                                savedModel.formatedEndTime ?? "";
+                            isSelectedTimeSlots2 = false;
+                            isSelectedTimeSlots = false;
+                            if (startTimeController.text.isNotEmpty &&
+                                endTimeController.text.isNotEmpty &&
+                                savedModel.date != null) {
+                              savedModel.difference = Helper.timeDifference(
+                                s: startTimeController.text,
+                                e: endTimeController.text,
+                                dateTime: savedModel.date,
+                                context: context,
                               );
+                              if (savedModel.difference != null &&
+                                  savedModel.bookingType != null) {
+                                total = Helper.calculateTotal(savedModel);
+                              }
                             }
-                          } else {
-                            validateTimes();
                           }
                         }
                         _notify();
@@ -372,37 +337,18 @@ class _HomeState extends State<Home> {
                       if (isSelectedTimeSlots) {
                         startTimeController.text = SlotsEnum.morning.startTime;
                         endTimeController.text = SlotsEnum.morning.endTime;
-                        timeDifference = Helper.timeDifference(
+                        savedModel.startTime =
+                            SlotsEnum.morning.startTimeTimeOfDay;
+                        savedModel.endTime = SlotsEnum.morning.endTimeTimeOfDay;
+                        savedModel.difference = Helper.timeDifference(
                           s: startTimeController.text,
                           e: endTimeController.text,
-                          dateTime: selectedDate,
+                          dateTime: savedModel.date,
                           context: context,
                         );
-                        if (timeDifference != null && selectedValue != null) {
-                          total = Helper.calculateTotal(
-                            selectedValue: selectedValue!,
-                            timeDifference: timeDifference!,
-                            startTime: TimeOfDay(
-                              hour: int.parse(startTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .first),
-                              minute: int.parse(startTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .last),
-                            ),
-                            endTime: TimeOfDay(
-                              hour: int.parse(endTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .first),
-                              minute: int.parse(endTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .last),
-                            ),
-                          );
+                        if (savedModel.difference != null &&
+                            savedModel.bookingType != null) {
+                          total = Helper.calculateTotal(savedModel);
                         }
                       }
                       _notify();
@@ -424,37 +370,18 @@ class _HomeState extends State<Home> {
                       if (isSelectedTimeSlots2) {
                         startTimeController.text = SlotsEnum.night.startTime;
                         endTimeController.text = SlotsEnum.night.endTime;
-                        timeDifference = Helper.timeDifference(
+                        savedModel.startTime =
+                            SlotsEnum.night.startTimeTimeOfDay;
+                        savedModel.endTime = SlotsEnum.night.endTimeTimeOfDay;
+                        savedModel.difference = Helper.timeDifference(
                           s: startTimeController.text,
                           e: endTimeController.text,
-                          dateTime: selectedDate,
+                          dateTime: savedModel.date,
                           context: context,
                         );
-                        if (timeDifference != null && selectedValue != null) {
-                          total = Helper.calculateTotal(
-                            selectedValue: selectedValue!,
-                            timeDifference: timeDifference!,
-                            startTime: TimeOfDay(
-                              hour: int.parse(startTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .first),
-                              minute: int.parse(startTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .last),
-                            ),
-                            endTime: TimeOfDay(
-                              hour: int.parse(endTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .first),
-                              minute: int.parse(endTimeController.text
-                                  .trim()
-                                  .split(":")
-                                  .last),
-                            ),
-                          );
+                        if (savedModel.difference != null &&
+                            savedModel.bookingType != null) {
+                          total = Helper.calculateTotal(savedModel);
                         }
                       }
 
@@ -476,7 +403,7 @@ class _HomeState extends State<Home> {
               if (startTimeController.text.isNotEmpty &&
                   endTimeController.text.isNotEmpty &&
                   dateController.text.isNotEmpty &&
-                  selectedValue != null)
+                  savedModel.bookingType != null)
                 Container(
                   margin: const EdgeInsets.only(top: 16),
                   decoration: BoxDecoration(
@@ -489,7 +416,7 @@ class _HomeState extends State<Home> {
                     children: [
                       TotalCardWidget(
                         v1: "Activities",
-                        v2: selectedValue ?? "",
+                        v2: savedModel.bookingType ?? "",
                       ),
                       Divider(
                         height: 0,
@@ -507,13 +434,13 @@ class _HomeState extends State<Home> {
                       ),
                       TotalCardWidget(
                         v1: "Time",
-                        v2: "${startTimeController.text} - ${endTimeController.text} ($timeDifference hr)",
+                        v2: "${startTimeController.text} - ${endTimeController.text} (${savedModel.difference} hr)",
                       ),
-                      if (timeDifference != null && total != null)
+                      if (savedModel.difference != null && total != null)
                         TotalCardWidget(
                           color: kLightGreenColor,
                           v1: "Total",
-                          v2: "$timeDifference hr x ${total! / timeDifference!} = $total Rs",
+                          v2: "${savedModel.difference} hr x ${total! / savedModel.difference!} = $total Rs",
                         ),
                     ],
                   ),
@@ -556,15 +483,33 @@ class _HomeState extends State<Home> {
       Helper.toast(context, "Select start time");
     } else if (endTimeController.text.isEmpty) {
       Helper.toast(context, "Select end time");
-    } else if (timeDifference == null) {
+    } else if (savedModel.difference == null) {
       Helper.toast(context, "Invalid start and end time diffrence");
-    } else if (timeDifference == 0) {
+    } else if (savedModel.difference == 0) {
       Helper.toast(context, "Start and End time must be more then 1 hours");
-      startTimeController.clear();
       endTimeController.clear();
-    } else if (timeDifference! < 0) {
+      startTimeController.clear();
+      isSelectedTimeSlots = false;
+      isSelectedTimeSlots2 = false;
+    } else if (savedModel.difference! < 0) {
       Helper.toast(context, "Invalid End time difference");
       endTimeController.clear();
+      startTimeController.clear();
+      isSelectedTimeSlots = false;
+      isSelectedTimeSlots2 = false;
+    } else if (savedModel.date != null &&
+        Helper.timeDateValidation(
+            context: context,
+            date: savedModel.date,
+            time: TimeOfDay(
+              hour: int.parse(startTimeController.text.trim().split(":").first),
+              minute:
+                  int.parse(startTimeController.text.trim().split(":").last),
+            ))) {
+      endTimeController.clear();
+      startTimeController.clear();
+      isSelectedTimeSlots = false;
+      isSelectedTimeSlots2 = false;
     } else {
       return true;
     }
@@ -573,56 +518,62 @@ class _HomeState extends State<Home> {
 
   validate(BuildContext context) async {
     calculated = false;
-    if (selectedValue == null) {
+    if (savedModel.bookingType == null) {
       Helper.toast(context, "Select booking activities");
     } else if (dateController.text.isEmpty) {
       Helper.toast(context, "Select booking date");
     } else if (validateTimes()) {
-      total = Helper.calculateTotal(
-        selectedValue: selectedValue!,
-        timeDifference: timeDifference!,
-        startTime: TimeOfDay(
-          hour: int.parse(startTimeController.text.trim().split(":").first),
-          minute: int.parse(startTimeController.text.trim().split(":").last),
-        ),
-        endTime: TimeOfDay(
-          hour: int.parse(endTimeController.text.trim().split(":").first),
-          minute: int.parse(endTimeController.text.trim().split(":").last),
-        ),
-      );
+      total = Helper.calculateTotal(savedModel);
       calculated = true;
     }
     _notify();
   }
 
   saveData() {
-    _changeLoading(true);
-    Future.delayed(const Duration(seconds: 3), () async {
-      var uuid = const Uuid();
+    try {
+      _changeLoading(true);
+      Future.delayed(const Duration(seconds: 3), () async {
+        var uuid = const Uuid();
 
-      BookingModel bookingModel = BookingModel(
-        uuid: uuid.v1().toString(),
-        bookingType: selectedValue!,
-        date: dateController.text.trim(),
-        desc: descController.text.trim(),
-        difference: timeDifference,
-        formatedDate: dateController.text.trim(),
-        formatedEndTime: endTimeController.text.trim(),
-        formatedStartTime: startTimeController.text.trim(),
-        total: total,
-      );
+        DateTime dateTime = savedModel.date ?? DateTime.now();
+        String fDT = DateTime(dateTime.year, dateTime.month, dateTime.day,
+                savedModel.startTime!.hour, savedModel.startTime!.minute)
+            .toLocal()
+            .toString();
+        String efDT = DateTime(dateTime.year, dateTime.month, dateTime.day,
+                savedModel.endTime!.hour, savedModel.endTime!.minute)
+            .toLocal()
+            .toString();
 
-      log(uuid.v1().toString());
-      bool saved = await LocalDataBase.saveSlots(bookingModel, context);
-      _changeLoading(false);
-      if (saved) {
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const Booking(),
-          ),
+        BookingModel bookingModel = BookingModel(
+          uuid: uuid.v1().toString(),
+          bookingType: savedModel.bookingType!,
+          date: savedModel.date.toString(),
+          desc: descController.text.trim(),
+          difference: savedModel.difference,
+          fullStartDateTime: fDT,
+          fullEndDateTime: efDT,
+          formatedDate: dateController.text.trim(),
+          formatedEndTime: endTimeController.text.trim(),
+          formatedStartTime: startTimeController.text.trim(),
+          total: total,
         );
-        _refresh();
-      }
-    });
+
+        bool saved = await LocalDataBase.saveSlots(bookingModel, context);
+
+        _changeLoading(false);
+        if (saved) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const Booking(),
+            ),
+          );
+          _refresh();
+        }
+      });
+    } catch (e) {
+      Helper.toast(context, e.toString());
+      _changeLoading(false);
+    }
   }
 }

@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:adda/model/saved_model.dart';
 import 'package:adda/utils/color.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +24,7 @@ class Helper {
           backgroundColor: kRedColor,
         ),
       );
-  static String? dateForm(DateTime dateTime) {
+  static String? dateFormmatHelper(DateTime dateTime) {
     try {
       return DateFormat("dd-MM-yyyy").format(dateTime).toString();
     } catch (e) {
@@ -32,7 +33,17 @@ class Helper {
     }
   }
 
-  static Future<String?> getTime(BuildContext context, DateTime date) async {
+  static String? timeFormmatHelper(BuildContext context, TimeOfDay dateTime) {
+    try {
+      return MaterialLocalizations.of(context)
+          .formatTimeOfDay(dateTime, alwaysUse24HourFormat: true);
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
+  static Future<TimeOfDay?> getTime(BuildContext context, DateTime date) async {
     try {
       TimeOfDay? tempDate = await showTimePicker(
         context: context,
@@ -54,10 +65,7 @@ class Helper {
           date: date,
         );
         if (!value) {
-          final loc = MaterialLocalizations.of(context)
-              .formatTimeOfDay(tempDate, alwaysUse24HourFormat: true);
-          log(loc);
-          return loc;
+          return tempDate;
         }
       }
     } catch (e) {
@@ -75,6 +83,7 @@ class Helper {
           DateTime(date.year, date.month, date.day, time.hour, time.minute);
       if (selectedTime.isBefore(dateTime)) {
         Helper.toast(context, "Start-End time should be of future");
+        return true;
       }
     }
     return false;
@@ -119,26 +128,27 @@ class Helper {
     return null;
   }
 
-  static int? calculateTotal(
-      {required String selectedValue,
-      required int timeDifference,
-      required TimeOfDay? endTime,
-      required TimeOfDay? startTime}) {
-    if (selectedValue == "ClubHouse" && endTime != null && startTime != null) {
-      if (startTime.hour > 0 && endTime.hour < 16) {
-        return timeDifference * 100;
-      } else if (startTime.hour >= 16 && endTime.hour <= 23) {
-        return timeDifference * 500;
-      } else if (startTime.hour < 16 && endTime.hour > 23) {
-        int v1 = (16 - startTime.hour) * 100;
-        int v2 = (endTime.hour - 16) * 500;
+  static int? calculateTotal(SavedBookingModel savedModel) {
+    if (savedModel.bookingType == "ClubHouse" &&
+        savedModel.startTime != null &&
+        savedModel.endTime != null &&
+        savedModel.difference != null) {
+      if (savedModel.startTime!.hour > 0 && savedModel.endTime!.hour < 16) {
+        return savedModel.difference! * 100;
+      } else if (savedModel.startTime!.hour >= 16 &&
+          savedModel.endTime!.hour <= 23) {
+        return savedModel.difference! * 500;
+      } else if (savedModel.startTime!.hour < 16 &&
+          savedModel.endTime!.hour > 23) {
+        int v1 = (16 - savedModel.startTime!.hour) * 100;
+        int v2 = (savedModel.endTime!.hour - 16) * 500;
         return v1 + v2;
       } else {
-        return timeDifference * 100;
+        return savedModel.difference! * 100;
       }
     }
-    if (selectedValue == "Tennis") {
-      return timeDifference * 50;
+    if (savedModel.bookingType == "Tennis") {
+      return savedModel.difference! * 50;
     }
     return null;
   }
